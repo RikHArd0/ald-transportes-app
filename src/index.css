@@ -1,0 +1,15 @@
+body {
+  background: radial-gradient(ellipse at center, #111a2f 0%, #0d172a 100%);
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+}
+body[data-theme="dark"] {
+  background: radial-gradient(ellipse at center, #111a2f 0%, #0d172a 100%);
+  color: #fff;
+}
+
+body[data-theme="light"] {
+  background: #f6f8fa;
+  color: #222;
+}
