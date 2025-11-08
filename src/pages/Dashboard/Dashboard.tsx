@@ -1,83 +1,108 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, type ReactElement } from 'react'
+import { supabase } from '../../lib/supabaseClient'
+import { useNavigate } from 'react-router-dom'
+import './Dashboard.css'
+import { Gear, SignOut } from '@phosphor-icons/react'
 
-export default function Dashboard() {
+
+export default function Dashboard(): ReactElement {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [user, setUser] = useState<any>(null);
-  const [userType, setUserType] = useState<'empresa' | 'motorista' | 'admin' | null>(null);
-  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null)
+  const [userType, setUserType] = useState<
+    'empresa' | 'motorista' | 'admin' | null
+  >(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    checkUser();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    checkUser()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function checkUser() {
-    const { data: { user: userData } } = await supabase.auth.getUser();
+    const {
+      data: { user: userData }
+    } = await supabase.auth.getUser()
 
     if (!userData) {
-      navigate('/login');
-      return;
+      navigate('/login')
+      return
     }
 
-    setUser(userData);
+    setUser(userData)
 
     // Buscar perfil do usuário
     const { data: profile } = await supabase
       .from('profiles')
-      .select('tipo')
+      .select('role')
       .eq('id', userData.id)
-      .single();
+      .single()
 
     if (profile) {
-      setUserType(profile.tipo);
+      setUserType(profile.role as 'empresa' | 'motorista' | 'admin')
     }
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut();
-    navigate('/login');
+    await supabase.auth.signOut()
+    navigate('/login')
   }
 
   if (!user || !userType) {
-    return <div>Carregando...</div>;
+    return <div>Carregando...</div>
   }
 
   return (
     <div style={{ padding: '20px', color: 'var(--text-main)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <h1>ALD Transportes</h1>
-        <button
-          onClick={handleLogout}
-          style={{
-            background: '#e93131',
-            color: '#fff',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            cursor: 'pointer'
-          }}
-        >
-          Sair
-        </button>
-      </div>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '30px'
+        }}
+      ></div>
 
-      {/* Redirecionar conforme tipo de usuário */}
-      {userType === 'empresa' && <DashboardEmpresa />}
-      {userType === 'motorista' && <DashboardMotorista />}
-      {userType === 'admin' && <DashboardAdmin />}
+      <div style={{ padding: '20px', color: 'var(--text-main)' }}>
+        {/* seu header/appbar aqui */}
+
+        {/* Painel do usuário */}
+        {userType === 'empresa' && <DashboardEmpresa />}
+        {userType === 'motorista' && <DashboardMotorista />}
+        {userType === 'admin' && <DashboardAdmin />}
+
+        {/* <-- COLE O FOOTER AQUI */}
+        <footer className="painel-footer">
+          <button className="footer-btn" onClick={handleLogout} title="Sair">
+            <SignOut size={28} color="#fff" />
+          </button>
+          <button
+            className="footer-btn"
+            onClick={() => navigate('/config')}
+            title="Configurações"
+          >
+            <Gear size={28} color="#fff" />
+          </button>
+        </footer>
+      </div>
+      {/* <-- FIM DO FOOTER */}
     </div>
-  );
+  )
 }
 
-// Dashboard para Empresas
-function DashboardEmpresa() {
-  const navigate = useNavigate();
+/* Dashboard para Empresas */
+function DashboardEmpresa(): ReactElement {
+  const navigate = useNavigate()
 
   return (
     <div>
       <h2>Painel da Empresa</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '20px' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '20px',
+          marginTop: '20px'
+        }}
+      >
         <button
           onClick={() => navigate('/nova-solicitacao')}
           style={{
@@ -140,34 +165,35 @@ function DashboardEmpresa() {
         </button>
       </div>
     </div>
-  );
+  )
 }
-
-// Dashboard para Motoristas
-function DashboardMotorista() {
-  const navigate = useNavigate();
+/* Dashboard para Motoristas */
+function DashboardMotorista(): ReactElement {
+  const navigate = useNavigate()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [chamadosPendentes, setChamadosPendentes] = useState<any>([]);
+  const [chamadosPendentes, setChamadosPendentes] = useState<any>([])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [meusChamados, setMeusChamados] = useState<any>([]);
+  const [meusChamados, setMeusChamados] = useState<any>([])
 
   useEffect(() => {
-    buscarChamados();
-  }, []);
+    buscarChamados()
+  }, [])
 
   async function buscarChamados() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser()
 
-    // Buscar chamados pendentes disponíveis
+    // Buscar chamados pendentes (disponíveis)
     const { data: pendentes } = await supabase
       .from('chamados')
       .select('*')
-      .eq('status', 'pendente')
-      .order('createdat', { ascending: false })
-      .limit(3);
+      .eq('status', 'disponivel')
+      .order('created_at', { ascending: false })
+      .limit(3)
 
     if (pendentes) {
-      setChamadosPendentes(pendentes);
+      setChamadosPendentes(pendentes)
     }
 
     // Buscar meus chamados aceitos
@@ -175,88 +201,75 @@ function DashboardMotorista() {
       const { data: aceitos } = await supabase
         .from('chamados')
         .select('*')
-        .eq('motoristaid', user.id)
-        .in('status', ['aceito', 'emandamento'])
-        .order('aceitoem', { ascending: false })
-        .limit(3);
+        .eq('motorista_id', user.id)
+        .in('status', ['aceito', 'em_andamento'])
+        .order('aceito_em', { ascending: false })
+        .limit(3)
 
       if (aceitos) {
-        setMeusChamados(aceitos);
+        setMeusChamados(aceitos)
       }
     }
   }
 
   return (
-    <div>
-      <h2>Painel do Motorista</h2>
+    <>
+      <div className="painel-motorista">
+        <div className="painel-titulo-bar">
+          <h2>Painel do Motorista</h2>
+        </div>
 
-      {/* Cards de Ações Rápidas */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginTop: '20px', marginBottom: '30px' }}>
-        <button
-          onClick={() => navigate('/chamados-disponiveis')}
-          style={{
-            background: 'linear-gradient(90deg, #4ad491 10%, #2ecc71 90%)',
-            color: '#fff',
-            border: 'none',
-            padding: '30px',
-            borderRadius: '12px',
-            cursor: 'pointer',
-            fontSize: '18px',
-            fontWeight: '600'
-          }}
-        >
-          Chamados Disponíveis
-          {chamadosPendentes.length > 0 && (
-            <div style={{ fontSize: '14px', marginTop: '10px', opacity: 0.9 }}>
-              {chamadosPendentes.length} novo{chamadosPendentes.length !== 1 ? 's' : ''}
-            </div>
-          )}
-        </button>
-        <button
-          onClick={() => navigate('/meus-chamados')}
-          style={{
-            background: 'var(--background-box)',
-            color: 'var(--text-main)',
-            border: '2px solid #358aff',
-            padding: '30px',
-            borderRadius: '12px',
-            cursor: 'pointer',
-            fontSize: '18px',
-            fontWeight: '600'
-          }}
-        >
-          Meus Chamados
-          {meusChamados.length > 0 && (
-            <div style={{ fontSize: '14px', marginTop: '10px', opacity: 0.7 }}>
-              {meusChamados.length} ativo{meusChamados.length !== 1 ? 's' : ''}
-            </div>
-          )}
-        </button>
-        <button
-          onClick={() => navigate('/minha-localizacao')}
-          style={{
-            background: 'var(--background-box)',
-            color: 'var(--text-main)',
-            border: '2px solid #4ad491',
-            padding: '30px',
-            borderRadius: '12px',
-            cursor: 'pointer',
-            fontSize: '18px',
-            fontWeight: '600'
-          }}
-        >
-          Minha Localização
-        </button>
+        {/* Cards de Ações Rápidas */}
+        <div className="painel-buttons">
+          <button
+            className="painel-btn painel-disponivel"
+            onClick={() => navigate('/chamados-disponiveis')}
+          >
+            Chamados Disponíveis
+            {chamadosPendentes.length > 0 && (
+              <div className="painel-btn-status">
+                {chamadosPendentes.length} novo
+                {chamadosPendentes.length !== 1 ? 's' : ''}
+              </div>
+            )}
+          </button>
+
+          <button
+            className="painel-btn painel-meus"
+            onClick={() => navigate('/meus-chamados')}
+          >
+            Meus Chamados
+            {meusChamados.length > 0 && (
+              <div className="painel-btn-status">
+                {meusChamados.length} ativo
+                {meusChamados.length !== 1 ? 's' : ''}
+              </div>
+            )}
+          </button>
+
+          <button
+            className="painel-btn painel-localizacao"
+            onClick={() => navigate('/minha-localizacao')}
+          >
+            Minha Localização
+          </button>
+        </div>
       </div>
 
       {/* Resumo de Chamados em Andamento */}
       {meusChamados.length > 0 && (
         <div style={{ marginTop: '30px' }}>
           <h3>Chamados em Andamento ({meusChamados.length})</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '15px',
+              marginTop: '15px'
+            }}
+          >
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {meusChamados.map((chamado: any) => (
-
+            {meusChamados.map((chamado: any) => (
               <div
                 key={chamado.id}
                 style={{
@@ -268,20 +281,35 @@ function DashboardMotorista() {
                 }}
                 onClick={() => navigate(`/chamado/${chamado.id}`)}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}
+                >
                   <div>
-                    <h4 style={{ margin: '0 0 10px 0' }}>{chamado.tipoveiculo}</h4>
-                    <p style={{ margin: '5px 0' }}><strong>Origem:</strong> {chamado.origem}</p>
-                    <p style={{ margin: '5px 0' }}><strong>Destino:</strong> {chamado.destino}</p>
+                    <h4 style={{ margin: '0 0 10px 0' }}>
+                      {chamado.tipo_veiculo}
+                    </h4>
+                    <p style={{ margin: '5px 0' }}>
+                      <strong>Origem:</strong> {chamado.origem}
+                    </p>
+                    <p style={{ margin: '5px 0' }}>
+                      <strong>Destino:</strong> {chamado.destino}
+                    </p>
                   </div>
-                  <div style={{
-                    padding: '8px 16px',
-                    borderRadius: '20px',
-                    background: chamado.status === 'aceito' ? '#2196F3' : '#FF9800',
-                    color: '#fff',
-                    fontSize: '14px',
-                    fontWeight: '600'
-                  }}>
+                  <div
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      background:
+                        chamado.status === 'aceito' ? '#2196F3' : '#FF9800',
+                      color: '#fff',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}
+                  >
                     {chamado.status === 'aceito' ? 'Aceito' : 'Em Andamento'}
                   </div>
                 </div>
@@ -294,7 +322,14 @@ function DashboardMotorista() {
       {/* Preview de Chamados Disponíveis */}
       {chamadosPendentes.length > 0 && (
         <div style={{ marginTop: '30px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '15px'
+            }}
+          >
             <h3>Últimos Chamados Disponíveis</h3>
             <button
               onClick={() => navigate('/chamados-disponiveis')}
@@ -310,10 +345,11 @@ function DashboardMotorista() {
               Ver Todos →
             </button>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}
+          >
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {chamadosPendentes.map((chamado: any) => (
-
+            {chamadosPendentes.map((chamado: any) => (
               <div
                 key={chamado.id}
                 style={{
@@ -324,9 +360,15 @@ function DashboardMotorista() {
                 }}
               >
                 <h4>🆕 NOVO CHAMADO</h4>
-                <p><strong>Origem:</strong> {chamado.origem}</p>
-                <p><strong>Destino:</strong> {chamado.destino}</p>
-                <p><strong>Veículo:</strong> {chamado.tipoveiculo}</p>
+                <p>
+                  <strong>Origem:</strong> {chamado.origem}
+                </p>
+                <p>
+                  <strong>Destino:</strong> {chamado.destino}
+                </p>
+                <p>
+                  <strong>Veículo:</strong> {chamado.tipo_veiculo}
+                </p>
                 <button
                   onClick={() => navigate('/chamados-disponiveis')}
                   style={{
@@ -350,65 +392,121 @@ function DashboardMotorista() {
         </div>
       )}
 
+      {/* Mensagem quando não há chamados */}
       {chamadosPendentes.length === 0 && meusChamados.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#666' }}>
-          <p style={{ fontSize: '18px' }}>Nenhum chamado disponível no momento</p>
-          <p style={{ fontSize: '14px', marginTop: '10px' }}>Verifique novamente mais tarde</p>
+        <div
+          style={{ textAlign: 'center', padding: '60px 20px', color: '#666' }}
+        >
+          <p style={{ fontSize: '18px' }}>
+            Nenhum chamado disponível no momento
+          </p>
+          <p style={{ fontSize: '14px', marginTop: '10px' }}>
+            Verifique novamente mais tarde
+          </p>
         </div>
       )}
-    </div>
-  );
+    </>
+  )
 }
-
-// Dashboard Admin
-function DashboardAdmin() {
-  const navigate = useNavigate();
-  const [stats, setStats] = useState({ ativas: 0, concluidas: 0, motoristas: 0 });
+/* Dashboard Admin */
+function DashboardAdmin(): ReactElement {
+  const navigate = useNavigate()
+  const [stats, setStats] = useState({
+    ativas: 0,
+    concluidas: 0,
+    motoristas: 0
+  })
 
   useEffect(() => {
-    buscarEstatisticas();
-  }, []);
+    buscarEstatisticas()
+  }, [])
 
   async function buscarEstatisticas() {
     const { data: ativas } = await supabase
       .from('chamados')
       .select('id', { count: 'exact' })
-      .in('status', ['pendente', 'aceito']);
+      .in('status', ['disponivel', 'aceito', 'em_andamento'])
 
     const { data: concluidas } = await supabase
       .from('chamados')
       .select('id', { count: 'exact' })
-      .eq('status', 'concluido');
+      .eq('status', 'concluido')
 
     const { data: motoristas } = await supabase
-      .from('motoristas')
-      .select('id', { count: 'exact' });
+      .from('profiles')
+      .select('id', { count: 'exact' })
+      .eq('role', 'motorista')
 
     setStats({
       ativas: ativas?.length || 0,
       concluidas: concluidas?.length || 0,
       motoristas: motoristas?.length || 0
-    });
+    })
   }
+
   return (
     <div>
       <h2>Dashboard Administrativo</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '20px' }}>
-        <div style={{ background: 'var(--background-box)', padding: '30px', borderRadius: '12px', textAlign: 'center' }}>
-          <h1 style={{ margin: '0', fontSize: '48px', color: '#358aff' }}>{stats.ativas}</h1>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '20px',
+          marginTop: '20px'
+        }}
+      >
+        <div
+          style={{
+            background: 'var(--background-box)',
+            padding: '30px',
+            borderRadius: '12px',
+            textAlign: 'center'
+          }}
+        >
+          <h1 style={{ margin: 0, fontSize: '48px', color: '#358aff' }}>
+            {stats.ativas}
+          </h1>
           <p>Solicitações Ativas</p>
         </div>
-        <div style={{ background: 'var(--background-box)', padding: '30px', borderRadius: '12px', textAlign: 'center' }}>
-          <h1 style={{ margin: '0', fontSize: '48px', color: '#4ad491' }}>{stats.concluidas}</h1>
+
+        <div
+          style={{
+            background: 'var(--background-box)',
+            padding: '30px',
+            borderRadius: '12px',
+            textAlign: 'center'
+          }}
+        >
+          <h1 style={{ margin: 0, fontSize: '48px', color: '#4ad491' }}>
+            {stats.concluidas}
+          </h1>
           <p>Solicitações Concluídas</p>
         </div>
-        <div style={{ background: 'var(--background-box)', padding: '30px', borderRadius: '12px', textAlign: 'center' }}>
-          <h1 style={{ margin: '0', fontSize: '48px', color: '#FF9800' }}>{stats.motoristas}</h1>
+
+        <div
+          style={{
+            background: 'var(--background-box)',
+            padding: '30px',
+            borderRadius: '12px',
+            textAlign: 'center'
+          }}
+        >
+          <h1 style={{ margin: 0, fontSize: '48px', color: '#FF9800' }}>
+            {stats.motoristas}
+          </h1>
           <p>Motoristas Ativos</p>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '30px' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '20px',
+          marginTop: '30px'
+        }}
+      >
         <button
           onClick={() => navigate('/admin/usuarios')}
           style={{
@@ -424,6 +522,7 @@ function DashboardAdmin() {
         >
           Gerenciar Usuários
         </button>
+
         <button
           onClick={() => navigate('/admin/motoristas')}
           style={{
@@ -439,6 +538,7 @@ function DashboardAdmin() {
         >
           Gerenciar Motoristas
         </button>
+
         <button
           onClick={() => navigate('/admin/solicitacoes')}
           style={{
@@ -454,6 +554,7 @@ function DashboardAdmin() {
         >
           Ver Todas Solicitações
         </button>
+
         <button
           onClick={() => navigate('/admin/relatorios')}
           style={{
@@ -471,5 +572,5 @@ function DashboardAdmin() {
         </button>
       </div>
     </div>
-  );
+  )
 }

@@ -1,0 +1,87 @@
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  max-width: 100vw;
+  min-height: 100vh;
+  background: #121226;
+  box-sizing: border-box;
+}
+
+.dashboard-root {
+  width: 100vw;
+  max-width: 100vw;
+  min-height: 100vh;
+}
+
+.painel-motorista {
+  width: 100%;
+  max-width: 100vw;
+  margin: 0;
+  padding: 20px 0;
+  box-sizing: border-box;
+}
+
+.painel-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;  /* Centraliza vertical */
+  gap: 16px;
+}
+
+.painel-btn {
+  width: 100%;       /* Usa toda largura disponível do container */
+  max-width: 340px;  /* Nunca fica enorme */
+  min-width: 140px;  /* Corrigido: 'px' ao invés de 'p' */
+  margin: 0;         /* Não precisa mais centralizar, pois painel-buttons já faz isso */
+  padding: 13px 0;
+  font-size: 1.07rem;
+  border-radius: 12px;
+  border: none;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+
+.painel-btn-status {
+  font-size: 14px;
+  margin-top: 8px;
+  opacity: 0.82;
+  font-weight: 400;
+}
+
+.painel-disponivel {
+  background: linear-gradient(90deg, #4ad491 10%, #2ecc71 90%);
+  color: #fff;
+}
+.painel-meus {
+  background: #131a35;
+  color: #fff;
+  border: 2px solid #358aff;
+}
+.painel-localizacao {
+  background: #131a35;
+  color: #fff;
+  border: 2px solid #4ad491;
+}
+
+/* Responsivo: para desktop/telas grandes acima de 700px */
+@media (min-width: 700px) {
+  .dashboard-root,
+  .painel-motorista {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px 0;
+  }
+  .painel-buttons {
+    flex-direction: row;
+  }
+  .painel-btn {
+    margin-right: 12px;
+    margin-bottom: 0;
+    flex: 1;
+  }
+  .painel-btn:last-child {
+    margin-right: 0;
+  }
+}
